@@ -1,0 +1,35 @@
+cmake_minimum_required(VERSION 3.5.1)
+
+project(
+    MyProject
+    VERSION 0.1
+    DESCRIPTION "zeroArrayDeclaration"
+    LANGUAGES C
+)
+
+### SET INSTALL PATH ####
+set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/bin")
+# set(CMAKE_LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+
+### ADD BUILD SUBDIRECTORIES ###
+# add_subdirectory(INIParser)
+
+
+
+### make executable ###
+add_executable(${PROJECT_NAME} main.c)
+
+### USER LINK LIBRARIES
+# TARGET_LINK_LIBRARIES(${PROJECT_NAME}
+# )
+
+# ### SYSTEM LINK LIBRARIES
+# TARGET_LINK_LIBRARIES(${PROJECT_NAME}
+# 	pthread
+#     rt
+# )
+
+### INSTALL TARGETS
+INSTALL(TARGETS ${PROJECT_NAME}
+	DESTINATION ${CMAKE_INSTALL_PREFIX}
+)
