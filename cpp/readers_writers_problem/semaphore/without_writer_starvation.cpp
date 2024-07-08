@@ -1,27 +1,38 @@
-#include <fcntl.h> /* For O_* constants */
+#include <cstring>
 #include <iostream>
 #include <semaphore.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/ipc.h>
-#include <sys/mman.h>
 #include <sys/shm.h>
-#include <sys/stat.h> /* For mode constants */
-#include <sys/types.h>
 #include <thread>
-#include <unistd.h>
 #include <vector>
+
+/*--------------------------------------------------------------------*/
 
 #define SHM_SIZE    1024 /* make it a 1K shared memory segment */
 #define MAX_READERS 10
 
+/*--------------------------------------------------------------------*/
+
+struct T_DATA
+{
+    int increment;
+};
+
+struct T_SHM_SDM_LOCK
+{
+    sem_t in;
+    sem_t mx;            // 읽는 카운터 보호에 대한 세마포어
+    sem_t wrt;           // 보호하려는 공유 자원에 대한 세마포어
+    uint32_t read_count; // 읽고 있는 reader 수
+};
+
 struct SharedMemory
 {
-    int shared_data = 0; // 공유 변수
-    sem_t rw_mutex;      // 보호하려는 공유 자원에 대한 세마포어
-    sem_t mutex;         // 읽는 카운터 보호에 대한 세마포어
-    int read_count = 0;  // 읽고 있는 reader 수
+    T_DATA shared_data; // 공유 변수
+
+    T_SHM_SDM_LOCK lock;
 };
+
+/*--------------------------------------------------------------------*/
 
 int main(int argc, char *argv[])
 {
@@ -50,35 +61,35 @@ int main(int argc, char *argv[])
     if (argc != 1)
     {
         memset(data, 0, SHM_SIZE);
-        sem_init(&sharedMemory->rw_mutex, 0, 1);
-        sem_init(&sharedMemory->mutex, 0, 1);
+        sem_init(&sharedMemory->lock.in, 1, 1);
+        sem_init(&sharedMemory->lock.mx, 1, 1);
+        sem_init(&sharedMemory->lock.wrt, 1, 1);
     }
 
     auto reader = [&sharedMemory](int reader_id, bool &is_running) {
         while (is_running)
         {
             // Entry section
-            sem_wait(&sharedMemory->mutex);
-            sharedMemory->read_count++;
-            if (sharedMemory->read_count == 1)
+            sem_wait(&sharedMemory->lock.in);
+            sem_wait(&sharedMemory->lock.mx);
+            if (++(sharedMemory->lock.read_count) == 1) // First reader must block writer's access
             {
-                sem_wait(&sharedMemory->rw_mutex);
+                sem_wait(&sharedMemory->lock.wrt);
             }
-            sem_post(&sharedMemory->mutex);
+            sem_post(&sharedMemory->lock.mx);
+            sem_post(&sharedMemory->lock.in);
 
             // Critical section
-            std::cout << "Reader " << reader_id << ": read shared_data = " << sharedMemory->shared_data << std::endl;
+            std::cout << "Reader " << reader_id << ": read shared_data = " << sharedMemory->shared_data.increment
+                      << std::endl;
 
             // Exit section
-            sem_wait(&sharedMemory->mutex);
-            sharedMemory->read_count--;
-            if (sharedMemory->read_count == 0)
+            sem_wait(&sharedMemory->lock.mx);
+            if (--(sharedMemory->lock.read_count) == 0) // Last reader must release writer's access
             {
-                sem_post(&sharedMemory->rw_mutex);
+                sem_post(&sharedMemory->lock.wrt);
             }
-            sem_post(&sharedMemory->mutex);
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 1000));
+            sem_post(&sharedMemory->lock.mx);
         }
     };
 
@@ -86,14 +97,17 @@ int main(int argc, char *argv[])
         while (is_running)
         {
             // Entry section
-            sem_wait(&sharedMemory->rw_mutex);
+            sem_wait(&sharedMemory->lock.in);
+            sem_wait(&sharedMemory->lock.wrt);
 
             // Critical section
-            sharedMemory->shared_data++;
-            std::cout << "Writer: " << writer_id << ": wrote shared_data = " << sharedMemory->shared_data << std::endl;
+            sharedMemory->shared_data.increment++;
+            std::cout << "Writer: " << writer_id << ": wrote shared_data = " << sharedMemory->shared_data.increment
+                      << std::endl;
 
             // Exit section
-            sem_post(&sharedMemory->rw_mutex);
+            sem_post(&sharedMemory->lock.wrt);
+            sem_post(&sharedMemory->lock.in);
 
             std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 1000));
         }
@@ -124,8 +138,9 @@ int main(int argc, char *argv[])
         writer.join();
     }
 
-    sem_destroy(&sharedMemory->rw_mutex);
-    sem_destroy(&sharedMemory->mutex);
+    sem_destroy(&sharedMemory->lock.in);
+    sem_destroy(&sharedMemory->lock.mx);
+    sem_destroy(&sharedMemory->lock.wrt);
 
     /* detach from the segment: */
     if (shmdt(data) == -1)
