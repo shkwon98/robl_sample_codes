@@ -61,3 +61,7 @@ Sessionx.vim
 tags
 # Persistent undo
 [._]*.un~
+
+### Rust gitignore ###
+target/
+*.lock
