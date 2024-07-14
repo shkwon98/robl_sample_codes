@@ -1,7 +1,14 @@
-# Rust
+# [Rust](https://www.rust-lang.org/)
 
 
-### How to Install [Rust](https://www.rust-lang.org/) on Linux
+## Table of Contents
+- [Rust](#rust)
+  - [Table of Contents](#table-of-contents)
+    - [How to Install Rust on Linux](#how-to-install-rust-on-linux)
+    - [How to Start a New Rust Project](#how-to-start-a-new-rust-project)
+    - [How to Install Dependencies(Crates) in a Rust Project](#how-to-install-dependenciescrates-in-a-rust-project)
+
+### How to Install Rust on Linux
 1. Download and run the official Rust installer rustup, using the following command
     ```bash
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
