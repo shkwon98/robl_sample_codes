@@ -1,7 +1,15 @@
-# Go
+# [Go](https://golang.org/)
 
 
-### How to Install [Go](https://golang.org/) on Linux
+## Table of Contents
+- [Go](#go)
+  - [Table of Contents](#table-of-contents)
+    - [How to Install Go on Linux](#how-to-install-go-on-linux)
+    - [How to Start a New Go Project](#how-to-start-a-new-go-project)
+    - [How to Install Dependencies(Go Packages) in a Go Project](#how-to-install-dependenciesgo-packages-in-a-go-project)
+
+
+### How to Install Go on Linux
 1. Download the latest version of Go from the official [Go website](https://golang.org/dl/)
 
 1. Remove any previous Go installation by deleting the /usr/local/go folder (if it exists)
