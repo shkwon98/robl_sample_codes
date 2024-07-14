@@ -1,5 +1,6 @@
 # Go
 
+
 ### How to Install [Go](https://golang.org/) on Linux
 1. Download the latest version of Go from the official [Go website](https://golang.org/dl/)
 
@@ -23,6 +24,7 @@
     go version
     ```
 
+
 ### How to Start a New Go Project
 1. Create a new directory for your project
     ```bash
@@ -42,15 +44,16 @@
 
 1. Write some Go code in main.go
 
-1. Run your Go program
-    ```bash
-    go run main.go
-    ```
-
 1. Build your Go program
     ```bash
     go build
     ```
+
+1. Or Directly run your Go program
+    ```bash
+    go run main.go
+    ```
+
 
 ### How to Install Dependencies(Go Packages) in a Go Project
 1. Install a dependency using the go get command
